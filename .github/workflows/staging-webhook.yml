@@ -1,0 +1,22 @@
+on:
+  workflow_run:
+    workflows: ["staging-server", "staging-client"]
+    types:
+      - completed
+
+send_redeploy_webhook:
+  runs-on: ubuntu-latest
+
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Send Webhook
+      env:
+        WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }} # Define the webhook URL as a secret in your repository
+      run: |
+        curl -X POST -H "Content-Type: application/json" -d '{
+          "repository": "${{ github.repository }}",
+          "ref": "${{ github.ref }}",
+          "commits": ${{ toJson(github.event.commits) }}
+        }' $WEBHOOK_URL
